@@ -2,6 +2,13 @@ const express = require("express");
 const { graphqlHTTP } = require("express-graphql");
 const { buildSchema } = require("graphql");
 
+require("dotenv").config();
+
+const connectDB = require("./db");
+connectDB();
+
+const Event = require("./models/Event");
+
 const app = express();
 
 // local data
@@ -45,19 +52,32 @@ app.use(
     `),
     rootValue: {
       events: () => {
-        return events;
+        return Event.find()
+          .then((events) => {
+            return events.map((event) => {
+              return { ...event._doc };
+            });
+          })
+          .catch((err) => {
+            throw err;
+          });
       },
       createEvent: (args) => {
-        const event = {
-          _id: Math.random().toString(),
+        const event = new Event({
           title: args.eventInput.title,
           description: args.eventInput.description,
           price: +args.eventInput.price,
-          date: args.eventInput.date,
-        };
+          date: new Date(args.eventInput.date),
+        });
 
-        events.push(event);
-        return event;
+        return event
+          .save()
+          .then((result) => {
+            return { ...result._doc };
+          })
+          .catch((err) => {
+            throw err;
+          });
       },
     },
     graphiql: true,
