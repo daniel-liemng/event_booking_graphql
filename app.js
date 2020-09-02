@@ -1,4 +1,5 @@
 const express = require("express");
+const morgan = require("morgan");
 const { graphqlHTTP } = require("express-graphql");
 
 const graphQLSchema = require("./graphql/schema/index");
@@ -16,6 +17,7 @@ const app = express();
 // middleware
 app.use(express.json());
 app.use(isAuth);
+app.use(morgan("dev"));
 
 // graphQL
 app.use(
