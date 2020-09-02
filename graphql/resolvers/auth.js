@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const User = require("../../models/User");
 
@@ -27,5 +28,31 @@ module.exports = {
       .catch((err) => {
         throw err;
       });
+  },
+  // login
+  login: async ({ email, password }) => {
+    try {
+      // check user
+      const user = await User.findOne({ email });
+      if (!user) {
+        throw new Error("User does not exist!");
+      }
+      // check password
+      const isEqual = await bcrypt.compare(password, user.password);
+      if (!isEqual) {
+        throw new Error("Password is incorrect!");
+      }
+      // get token
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "2h",
+        }
+      );
+      return { userId: user.id, token, tokenExpiration: 2 };
+    } catch (err) {
+      throw err;
+    }
   },
 };
